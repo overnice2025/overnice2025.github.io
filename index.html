@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proxy config field reference: Clash YAML vs sing-box JSON</title>
+<meta name="description" content="Side-by-side field mapping for Clash Verge Rev, mihomo and sing-box: ports, DNS, fake-ip, TUN, auto-route, rule providers, TLS SNI. With the semantic differences that break migrations.">
+<link rel="canonical" href="https://overnice2025.github.io/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Proxy config field reference: Clash YAML vs sing-box JSON">
+<meta property="og:description" content="Side-by-side field mapping for Clash Verge Rev, mihomo and sing-box: ports, DNS, fake-ip, TUN, auto-route, rule providers, TLS SNI. With the semantic differences that break migrations.">
+<meta property="og:url" content="https://overnice2025.github.io/">
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--mut:#5a6b69;--line:#e3e8e6;--acc:#0b6b5f;--code:#f5f7f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:40px}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header a.brand{font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+header nav a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:18px}
+header nav a:hover{color:var(--acc)}
+h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-size:21px;margin:44px 0 12px;letter-spacing:-.01em;padding-top:6px}
+h3{font-size:17px;margin:26px 0 8px}
+p{color:#2c3331}
+.lede{font-size:17px;color:var(--mut);margin:0 0 30px;max-width:70ch}
+table{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+code{background:var(--code);padding:2px 5px;border-radius:3px;font-size:13.5px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--code);padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+pre code{background:none;padding:0}
+.note{border-left:3px solid var(--acc);padding:2px 0 2px 14px;margin:20px 0;color:#3a4442}
+.card{display:block;border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+ margin:12px 0;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--acc)}
+.card b{display:block;margin-bottom:4px;font-size:15.5px}
+.card span{color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:24px 0 60px;color:var(--mut);font-size:13.5px}
+footer a{color:var(--acc)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;
+ background:#eef3f1;color:#3f5c56;margin-left:6px;vertical-align:1px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Proxy config field reference: Clash YAML vs sing-box JSON", "description": "Side-by-side field mapping for Clash Verge Rev, mihomo and sing-box: ports, DNS, fake-ip, TUN, auto-route, rule providers, TLS SNI. With the semantic differences that break migrations.", "url": "https://overnice2025.github.io/", "author": {"@type": "Organization", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "publisher": {"@type": "Organization", "name": "Proxy Config Reference"}, "isPartOf": {"@type": "WebSite", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "about": ["Clash", "mihomo", "sing-box", "proxy configuration"]}</script>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="/">Proxy Config Reference</a>
+<nav><a href="/">Config fields</a><a href="/errors.html">Error codes</a><a href="https://jiedianshouce.com">Full write-ups →</a></nav>
+</div></header>
+<main class="wrap">
+
+<h1>Proxy config field reference — Clash YAML vs sing-box JSON</h1>
+<p class="lede">The same setting in both formats, with the semantic difference spelled out.
+Most failed migrations are not missing fields — they are fields that exist in both formats,
+share a name, and mean something narrower in one of them.</p>
+
+<h2>Ports and entry points</h2>
+<table>
+<tr><th>Concept</th><th>Clash / mihomo</th><th>sing-box</th></tr>
+<tr><td>HTTP + SOCKS on one port</td><td><code>mixed-port: 7890</code></td><td><code>inbounds[type=mixed]</code>, <code>listen_port</code></td></tr>
+<tr><td>Separate HTTP / SOCKS</td><td><code>port:</code> / <code>socks-port:</code></td><td>two inbounds: <code>type: http</code>, <code>type: socks</code></td></tr>
+<tr><td>TUN adapter</td><td><code>tun:</code> block</td><td><code>inbounds[type=tun]</code></td></tr>
+<tr><td>LAN exposure</td><td><code>allow-lan: true</code> + <code>bind-address</code></td><td><code>listen: "0.0.0.0"</code> per inbound</td></tr>
+</table>
+<p class="note"><code>allow-lan: true</code> without <code>bind-address</code> is the usual
+"phone cannot connect" cause. On Windows the Windows Firewall does the same thing — the adapter
+is up, the port is bound to localhost only.</p>
+
+<h2>DNS</h2>
+<table>
+<tr><th>Concept</th><th>Clash / mihomo</th><th>sing-box</th></tr>
+<tr><td>Enable DNS</td><td><code>dns.enable: true</code></td><td><code>dns.servers</code> non-empty</td></tr>
+<tr><td>Synthetic answers</td><td><code>enhanced-mode: fake-ip</code></td><td>no fake-ip concept — always resolves</td></tr>
+<tr><td>Bypass list</td><td><code>fake-ip-filter</code></td><td><code>dns.rules</code> → direct server</td></tr>
+<tr><td>Bootstrap resolver</td><td><code>default-nameserver</code></td><td>not needed (servers addressed by IP or <code>detour</code>)</td></tr>
+<tr><td>Per-outbound isolation</td><td>implicit</td><td><code>dns.independent_cache: true</code></td></tr>
+</table>
+<p class="note">Clash can answer with a fake IP <em>before</em> resolving; sing-box always resolves.
+That is why a config with 40 <code>fake-ip-filter</code> entries has no direct sing-box equivalent —
+each entry becomes a <code>dns.rules</code> branch instead.</p>
+<p class="note"><code>independent_cache</code> matters more than it looks. Without it a domain
+resolved for <code>direct</code> is reused for <code>proxy</code>, producing a split-tunnel DNS leak
+that only shows up on sites whose answer differs by region.</p>
+
+<h2>TUN and routing</h2>
+<table>
+<tr><th>Concept</th><th>Clash / mihomo</th><th>sing-box</th></tr>
+<tr><td>Auto route</td><td><code>tun.auto-route</code></td><td><code>route.auto_detect_interface</code> + <code>tun.auto_route</code></td></tr>
+<tr><td>Interface detection</td><td><code>tun.auto-detect-interface</code></td><td><code>route.auto_detect_interface</code></td></tr>
+<tr><td>Stack</td><td><code>tun.stack</code>: mixed / gvisor / system</td><td><code>tun.stack</code>: mixed / gvisor / system</td></tr>
+<tr><td>DNS hijack</td><td><code>tun.dns-hijack</code></td><td><code>protocol: dns</code> route rule → <code>dns-out</code></td></tr>
+<tr><td>Block bypass</td><td>not exposed</td><td><code>tun.strict_route</code></td></tr>
+<tr><td>MTU</td><td><code>tun.mtu</code></td><td><code>tun.mtu</code></td></tr>
+</table>
+<p class="note"><code>strict_route</code> has no Clash equivalent. It is what stops apps from
+ignoring the TUN adapter, and on Windows it closes the DNS-leak path. A migrated config that
+leaks DNS where Clash did not is usually missing exactly this field.</p>
+<p class="note"><code>auto-route</code> without <code>auto-detect-interface</code> is accepted by both
+formats and breaks on both. The route table gets an entry pointing at an interface that cannot
+carry the traffic. Symptom is "connected, no internet" — never a config error.</p>
+
+<h2>Rules</h2>
+<table>
+<tr><th>Concept</th><th>Clash / mihomo</th><th>sing-box</th></tr>
+<tr><td>Inline rule</td><td><code>rules: ["DOMAIN-SUFFIX,x,DIRECT"]</code></td><td><code>route.rules[{domain_suffix, outbound}]</code></td></tr>
+<tr><td>Remote list</td><td><code>rule-providers</code> with <code>behavior</code></td><td><code>route.rule_set</code>, <code>format: binary</code></td></tr>
+<tr><td>List format</td><td><code>domain</code> / <code>ipcidr</code> / <code>classical</code></td><td>binary <code>.srs</code> or JSON source</td></tr>
+<tr><td>Default action</td><td><code>MATCH,PROXY</code> (must be last)</td><td><code>route.final</code></td></tr>
+<tr><td>Skip DNS for IP rules</td><td><code>no-resolve</code></td><td>implicit</td></tr>
+</table>
+<p class="note"><code>behavior</code> is the field that fails silently. A <code>behavior: domain</code>
+provider loaded from a <code>classical</code> list parses, reports success, and matches nothing.
+Check the first non-comment line of the source file: <code>DOMAIN-SUFFIX,</code> means it is classical.</p>
+
+<h2>Proxy nodes</h2>
+<table>
+<tr><th>Field</th><th>Clash / mihomo</th><th>sing-box</th></tr>
+<tr><td>VLESS flow</td><td><code>flow: xtls-rprx-vision</code></td><td><code>flow: xtls-rprx-vision</code></td></tr>
+<tr><td>TLS SNI</td><td><code>servername</code> (vmess) / <code>sni</code> (trojan)</td><td><code>tls.server_name</code> (uniform)</td></tr>
+<tr><td>Skip verification</td><td><code>skip-cert-verify: true</code></td><td><code>tls.insecure: true</code></td></tr>
+<tr><td>uTLS fingerprint</td><td><code>client-fingerprint: chrome</code></td><td><code>tls.utls.fingerprint</code></td></tr>
+<tr><td>Reality</td><td><code>reality-opts.public-key</code></td><td><code>tls.reality.public_key</code></td></tr>
+</table>
+<p class="note">Clash splits the SNI field by protocol — <code>servername</code> for vmess,
+<code>sni</code> for trojan. sing-box unifies everything under <code>tls.server_name</code>.
+Copying a Clash node block into sing-box and only changing <code>type</code> is how you get a
+TLS handshake failure against a valid certificate.</p>
+
+<h2>Validate before you debug</h2>
+<pre><code>mihomo -t -f config.yaml          # Clash / Clash Verge Rev profile
+sing-box check -c config.json     # sing-box
+sing-box rule-set compile x.json  # rule set before deploying</code></pre>
+<p>A passing check means the structure is valid. It says nothing about whether
+<code>auto-detect-interface</code> is set, whether <code>behavior</code> matches the file, or whether
+<code>independent_cache</code> is on. Those are the failures you are actually chasing.</p>
+
+<h2>Working configs</h2>
+<a class="card" href="https://github.com/overnice2025/clash-config-examples"><b>clash-config-examples</b>
+<span>Complete annotated config.yaml for mihomo and Clash Verge Rev, plus a sing-box config.json — every field with what breaks when it is wrong.</span></a>
+<a class="card" href="https://github.com/overnice2025/clash-error-codes"><b>clash-error-codes</b>
+<span>20 exact error strings from Clash Verge Rev, v2rayN, v2rayNG, Hiddify, sing-box and FlClash, each mapped to its failure stage.</span></a>
+<a class="card" href="https://github.com/overnice2025/proxy-client-matrix"><b>proxy-client-matrix</b>
+<span>10 clients compared field by field: platform, core, TUN, rule system, licence, price model.</span></a>
+<a class="card" href="https://github.com/overnice2025/subscription-format-notes"><b>subscription-format-notes</b>
+<span>base64 node lists vs Clash YAML vs sing-box JSON, and why conversion silently drops nodes.</span></a>
+</main>
+<footer><div class="wrap">
+<p>Maintained with <a href="https://github.com/overnice2025/clash-config-examples">clash-config-examples</a> and
+<a href="https://github.com/overnice2025/clash-error-codes">clash-error-codes</a>.
+Long-form write-ups with test evidence: <a href="https://jiedianshouce.com">jiedianshouce.com</a>.</p>
+<p>No benchmarks in this reference. Fields are described by what breaks when they are wrong,
+not by measured speed — different regions, ISPs and devices make speed claims unverifiable here.</p>
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>20 proxy client error strings: client, failure stage, first fix</title>
+<meta name="description" content="Exact error strings from Clash Verge Rev, v2rayN, v2rayNG, Hiddify, sing-box and FlClash, each mapped to the stage where it fails so you stop guessing.">
+<link rel="canonical" href="https://overnice2025.github.io/errors.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="20 proxy client error strings: client, failure stage, first fix">
+<meta property="og:description" content="Exact error strings from Clash Verge Rev, v2rayN, v2rayNG, Hiddify, sing-box and FlClash, each mapped to the stage where it fails so you stop guessing.">
+<meta property="og:url" content="https://overnice2025.github.io/errors.html">
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--mut:#5a6b69;--line:#e3e8e6;--acc:#0b6b5f;--code:#f5f7f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:40px}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header a.brand{font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+header nav a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:18px}
+header nav a:hover{color:var(--acc)}
+h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-size:21px;margin:44px 0 12px;letter-spacing:-.01em;padding-top:6px}
+h3{font-size:17px;margin:26px 0 8px}
+p{color:#2c3331}
+.lede{font-size:17px;color:var(--mut);margin:0 0 30px;max-width:70ch}
+table{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+code{background:var(--code);padding:2px 5px;border-radius:3px;font-size:13.5px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--code);padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+pre code{background:none;padding:0}
+.note{border-left:3px solid var(--acc);padding:2px 0 2px 14px;margin:20px 0;color:#3a4442}
+.card{display:block;border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+ margin:12px 0;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--acc)}
+.card b{display:block;margin-bottom:4px;font-size:15.5px}
+.card span{color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:24px 0 60px;color:var(--mut);font-size:13.5px}
+footer a{color:var(--acc)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;
+ background:#eef3f1;color:#3f5c56;margin-left:6px;vertical-align:1px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "20 proxy client error strings: client, failure stage, first fix", "description": "Exact error strings from Clash Verge Rev, v2rayN, v2rayNG, Hiddify, sing-box and FlClash, each mapped to the stage where it fails so you stop guessing.", "url": "https://overnice2025.github.io/errors.html", "author": {"@type": "Organization", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "publisher": {"@type": "Organization", "name": "Proxy Config Reference"}, "isPartOf": {"@type": "WebSite", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "about": ["Clash", "mihomo", "sing-box", "proxy configuration"]}</script>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="/">Proxy Config Reference</a>
+<nav><a href="/">Config fields</a><a href="/errors.html">Error codes</a><a href="https://jiedianshouce.com">Full write-ups →</a></nav>
+</div></header>
+<main class="wrap">
+
+<h1>20 proxy client error strings — client, failure stage, first fix</h1>
+<p class="lede">Each entry states where the failure happens, not just what it says.
+Most of these fail before traffic ever reaches a node, which is why "reinstall it" and
+"change your node" are the two most common wrong answers.</p>
+
+<h2>Read this before you change anything</h2>
+<div class="note">
+<p><strong>Save the first error line, verbatim.</strong> The first error is the cause; the lines
+after it are usually cascade. Copy it including the code and any quoted path.</p>
+<p><strong>Change one variable per round.</strong> Reinstalling, deleting the profile and switching
+nodes in the same session destroys the evidence you need.</p>
+<p><strong>Redact before you post.</strong> Subscription URLs, tokens, node passwords and unmasked
+logs are credentials. Redact them before pasting into an issue.</p>
+</div>
+<pre><code>mihomo -t -f config.yaml        # rule out the config first — cheapest test
+sing-box check -c config.json</code></pre>
+<table>
+<tr><th>Error string</th><th>Client</th><th>Fails at</th></tr>
+<tr><td><code>set system dns failed: exit code 1</code></td><td>Clash Verge Rev</td><td>DNS rewrite</td></tr>
+<tr><td><code>the remote profile data is invalid yaml</code></td><td>Clash Verge Rev</td><td>Profile fetch/parse</td></tr>
+<tr><td><code>An attempt was made to access a socket in a way forbidden by its access permissions</code></td><td>Clash Verge Rev</td><td>Profile activation</td></tr>
+<tr><td><code>program not found</code> / repeated &quot;Install Service&quot;</td><td>Clash Verge Rev</td><td>Service install</td></tr>
+<tr><td><code>service and cores</code> not satisfied</td><td>Clash Verge Rev</td><td>Runtime mode</td></tr>
+<tr><td><code>IPC timeout on first core start</code></td><td>Clash Verge Rev</td><td>Core IPC handshake</td></tr>
+<tr><td><code>System proxy on, no internet</code></td><td>Clash Verge Rev</td><td>Traffic takeover</td></tr>
+<tr><td><code>TUN on, no internet</code></td><td>Clash Verge Rev</td><td>TUN / routing</td></tr>
+<tr><td><code>failed to open geosite.dat</code></td><td>v2rayN</td><td>Rule file load</td></tr>
+<tr><td><code>ArgumentOutOfRange_Count</code></td><td>v2rayN</td><td>Subscription parse</td></tr>
+<tr><td><code>Failed to import subscription content</code></td><td>v2rayN</td><td>Import / gzip</td></tr>
+<tr><td><code>运行Core失败</code> / <code>bind: address already in use</code></td><td>v2rayN</td><td>Core start</td></tr>
+<tr><td><code>allowInsecure has been removed</code></td><td>v2rayNG</td><td>TLS config migration</td></tr>
+<tr><td><code>unknown field &quot;tunnel-per-resolver&quot;</code></td><td>Hiddify</td><td>Config schema</td></tr>
+<tr><td><code>netip.ParsePrefix(&quot;/24&quot;): ParseAddr(&quot;&quot;): unable to parse IP</code></td><td>Hiddify</td><td>WARP outbound build</td></tr>
+<tr><td><code>exit status 127</code></td><td>Hiddify</td><td>Linux TUN helper</td></tr>
+<tr><td><code>HiddifyCli.exe requires elevation</code></td><td>Hiddify</td><td>Windows privilege</td></tr>
+<tr><td><code>auto_redirect</code> → <code>operation not supported</code></td><td>sing-box</td><td>Linux TUN / nftables</td></tr>
+<tr><td><code>Remote rule-set download failed</code></td><td>sing-box</td><td>Rule-set fetch</td></tr>
+<tr><td><code>configuration file config.yaml is empty</code></td><td>FlClash</td><td>Profile switch</td></tr>
+</table>
+<h2>What each stage means</h2>
+<table>
+<tr><th>Stage</th><th>What it rules out</th></tr>
+<tr><td>DNS rewrite</td><td>Not the subscription, not the node. The client failed while changing the system DNS setting.</td></tr>
+<tr><td>Profile fetch / parse</td><td>The download or the YAML/JSON parse failed. Node health is irrelevant.</td></tr>
+<tr><td>Service install</td><td>The helper service is missing or blocked. Nothing downstream can work until it is installed.</td></tr>
+<tr><td>Core IPC handshake</td><td>The GUI started but the core did not report ready. Usually a leftover process or a locked port.</td></tr>
+<tr><td>Traffic takeover</td><td>System proxy or TUN is not actually capturing traffic. Compare with the client fully off.</td></tr>
+<tr><td>Rule file load</td><td>A data file is missing or from a mismatched version.</td></tr>
+<tr><td>Subscription parse</td><td>The payload is not in the format the client expects — often base64 when YAML was assumed.</td></tr>
+<tr><td>Core start</td><td>The core binary failed or its listen port is taken.</td></tr>
+<tr><td>Config schema</td><td>The config contains a field this version rejects — check the version before editing values.</td></tr>
+<tr><td>TUN helper / privilege</td><td>The OS refused the privileged operation. Not a config problem.</td></tr>
+</table>
+<p class="note">Full walkthroughs with commands, screenshots and stated evidence boundaries:
+<a href="https://jiedianshouce.com">jiedianshouce.com</a>. Each entry there says whether the fix was verified in-house
+or only reproduced from a report — that distinction is kept deliberately.</p>
+</main>
+<footer><div class="wrap">
+<p>Maintained with <a href="https://github.com/overnice2025/clash-config-examples">clash-config-examples</a> and
+<a href="https://github.com/overnice2025/clash-error-codes">clash-error-codes</a>.
+Long-form write-ups with test evidence: <a href="https://jiedianshouce.com">jiedianshouce.com</a>.</p>
+<p>No benchmarks in this reference. Fields are described by what breaks when they are wrong,
+not by measured speed — different regions, ISPs and devices make speed claims unverifiable here.</p>
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://overnice2025.github.io/sitemap.xml

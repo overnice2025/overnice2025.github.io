@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Converting vmess, vless, trojan and ss links to a Clash config</title>
+<meta name="description" content="How identity, transport and trust fields regroup into a Clash proxy entry, and the four conversions that import cleanly but carry no traffic.">
+<link rel="canonical" href="https://overnice2025.github.io/converter.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Converting vmess, vless, trojan and ss links to a Clash config">
+<meta property="og:description" content="How identity, transport and trust fields regroup into a Clash proxy entry, and the four conversions that import cleanly but carry no traffic.">
+<meta property="og:url" content="https://overnice2025.github.io/converter.html">
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--mut:#5a6b69;--line:#e3e8e6;--acc:#0b6b5f;--code:#f5f7f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:40px}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header a.brand{font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+header nav a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:18px}
+header nav a:hover{color:var(--acc)}
+h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-size:21px;margin:44px 0 12px;letter-spacing:-.01em;padding-top:6px}
+h3{font-size:17px;margin:26px 0 8px}
+p{color:#2c3331}
+.lede{font-size:17px;color:var(--mut);margin:0 0 30px;max-width:70ch}
+table{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+code{background:var(--code);padding:2px 5px;border-radius:3px;font-size:13.5px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--code);padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+pre code{background:none;padding:0}
+.note{border-left:3px solid var(--acc);padding:2px 0 2px 14px;margin:20px 0;color:#3a4442}
+.card{display:block;border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+ margin:12px 0;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--acc)}
+.card b{display:block;margin-bottom:4px;font-size:15.5px}
+.card span{color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:24px 0 60px;color:var(--mut);font-size:13.5px}
+footer a{color:var(--acc)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;
+ background:#eef3f1;color:#3f5c56;margin-left:6px;vertical-align:1px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Proxy config field reference: Clash YAML vs sing-box JSON", "description": "Side-by-side field mapping for Clash Verge Rev, mihomo and sing-box: ports, DNS, fake-ip, TUN, auto-route, rule providers, TLS SNI. With the semantic differences that break migrations.", "url": "https://overnice2025.github.io/", "author": {"@type": "Organization", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "publisher": {"@type": "Organization", "name": "Proxy Config Reference"}, "isPartOf": {"@type": "WebSite", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "about": ["Clash", "mihomo", "sing-box", "proxy configuration"]}</script>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="/">Proxy Config Reference</a>
+<nav><a href="/">Config fields</a><a href="/errors.html">Error codes</a><a href="/converter.html">Link to config</a><a href="/free-nodes.html">Node testing</a><a href="https://jiedianshouce.com">Full write-ups →</a></nav>
+</div></header>
+<main class="wrap">
+<h1>Converting a share link to a Clash config</h1>
+<p class="lede">A share link names a node. A Clash config tells the kernel what to do with it.
+The distance between the two is short, and every conversion bug lives inside it.</p>
+
+<h2>Three groups a share link carries</h2>
+<p>Whatever the scheme &mdash; <code>vmess://</code>, <code>vless://</code>, <code>trojan://</code>,
+<code>ss://</code>, <code>hysteria2://</code> &mdash; it packs the same three groups, in a different
+order and often in a different encoding.</p>
+<table>
+<tr><th>Group</th><th>What it is</th><th>Where it hides</th></tr>
+<tr><td>Identity</td><td>UUID or password proving the node may be used</td><td>userinfo before <code>@</code>, or a field inside a base64 JSON body</td></tr>
+<tr><td>Transport</td><td>TCP or QUIC, plain or WebSocket, with path and Host</td><td>query parameters, or <code>net</code> / <code>type</code> inside the encoded body</td></tr>
+<tr><td>Trust</td><td>TLS server name, certificate policy, REALITY keys</td><td><code>sni</code>, <code>allowInsecure</code>, <code>pbk</code> / <code>sid</code> / <code>fp</code></td></tr>
+</table>
+<p>A Clash proxy entry splits the same three groups into <code>server</code> and <code>port</code>,
+a transport block (<code>ws-opts</code>, <code>grpc-opts</code>, <code>reality-opts</code>) and a TLS
+block (<code>tls</code>, <code>servername</code>, <code>skip-cert-verify</code>,
+<code>client-fingerprint</code>). Conversion is that regrouping. Nothing gets added, and nothing
+should be dropped &mdash; so a config that imports cleanly but carries no traffic almost always lost
+something here.</p>
+
+<h2>The four regroupings that fail silently</h2>
+<h3>1. ss: deciding where the base64 ends</h3>
+<p>SIP002 encodes only the credential &mdash; <code>ss://base64(method:password)@host:port</code> &mdash;
+while the older form encodes the whole body,
+<code>ss://base64(method:password@host:port)</code>. Both are accepted in the wild. Split the second
+one on <code>@</code> and the server address becomes garbage, but the parser still yields a
+structurally valid <code>type: ss</code> entry, so nothing complains until the connection times out.</p>
+
+<h3>2. vmess: a cipher the kernel does not accept</h3>
+<p><code>vmess://</code> is base64 over a JSON object, and <code>scy</code> holds the cipher. Clash
+accepts <code>auto</code>, <code>aes-128-gcm</code>, <code>chacha20-poly1305</code> and
+<code>none</code>. Anything else has to be normalised on the way in. Skipping that step produces a
+config the core rejects at load time with a message about the proxy type, not about the cipher.</p>
+
+<h3>3. vless: a kernel that never supported it</h3>
+<p>vless has no password; identity is the UUID in the userinfo position. The original Clash core has
+no vless support at all, so converting vless to a Clash config only works on Clash Meta or mihomo.
+On the older core the node imports, shows as available, and never carries a byte.</p>
+
+<h3>4. REALITY: dropping the keys that make the handshake work</h3>
+<p><code>security=reality</code> carries three values that have no equivalent anywhere else:
+<code>pbk</code> becomes <code>public-key</code>, <code>sid</code> becomes <code>short-id</code>,
+and <code>fp</code> becomes <code>client-fingerprint</code>. <code>flow=xtls-rprx-vision</code>
+copies across verbatim. Lose any one of them and the node authenticates but the tunnel never passes
+traffic &mdash; the failure looks like a dead server, not a bad config.</p>
+
+<h2>Check the result in three steps</h2>
+<p>Parse first: load the YAML and confirm the <code>proxies:</code> list has the expected number of
+entries. Then confirm the client actually selected one of them &mdash; a proxy group with no selection
+is a valid config that routes nothing. Last, confirm the exit changed: the egress address after
+enabling the profile should differ from the one before it. Skipping the third step is how a config
+that silently fell back to direct gets mistaken for a working one.</p>
+
+<h2>If you would rather not paste links into a service</h2>
+<p>The conversion itself is mechanical, so it does not need a backend. Two browser-local converters,
+one per language, take a list of share links or a base64 subscription and emit a Clash YAML without
+uploading anything: <a href="https://jiedianshouce.com/en/tools/sub-converter/">vmess to Clash
+converter (English)</a> and
+<a href="https://jiedianshouce.com/tools/sub-converter/">订阅链接转换器（中文）</a>. The field mapping
+the converter applies is written out on those pages so the result can be checked by hand.</p>
+
+<h2>Related reference</h2>
+<p>The encoding differences that make conversion lossy are collected in
+<a href="https://github.com/overnice2025/subscription-format-notes">subscription-format-notes</a>;
+working configs for each core are in
+<a href="https://github.com/overnice2025/clash-config-examples">clash-config-examples</a>.</p>
+</main>
+<footer><div class="wrap">
+<p>Maintained with <a href="https://github.com/overnice2025/clash-config-examples">clash-config-examples</a> and
+<a href="https://github.com/overnice2025/clash-error-codes">clash-error-codes</a>.
+Long-form write-ups with test evidence: <a href="https://jiedianshouce.com">jiedianshouce.com</a>.</p>
+<p>No benchmarks in this reference. Fields are described by what breaks when they are wrong,
+not by measured speed — different regions, ISPs and devices make speed claims unverifiable here.</p>
+</div></footer>
+</body>
+</html>

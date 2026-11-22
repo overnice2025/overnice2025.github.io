@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What a free node measurement can and cannot tell you</title>
+<meta name="description" content="Why reachable is not working: dual-exit request testing, median versus best-sample latency, and the three things a passing result never proves about an endpoint.">
+<link rel="canonical" href="https://overnice2025.github.io/free-nodes.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What a free node measurement can and cannot tell you">
+<meta property="og:description" content="Why reachable is not working: dual-exit request testing, median versus best-sample latency, and the three things a passing result never proves about an endpoint.">
+<meta property="og:url" content="https://overnice2025.github.io/free-nodes.html">
+<style>
+:root{--bg:#ffffff;--fg:#1a1a1a;--mut:#5a6b69;--line:#e3e8e6;--acc:#0b6b5f;--code:#f5f7f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);padding:18px 0;margin-bottom:40px}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header a.brand{font-weight:700;font-size:17px;color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+header nav a{color:var(--mut);text-decoration:none;font-size:14px;margin-left:18px}
+header nav a:hover{color:var(--acc)}
+h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;margin:0 0 14px}
+h2{font-size:21px;margin:44px 0 12px;letter-spacing:-.01em;padding-top:6px}
+h3{font-size:17px;margin:26px 0 8px}
+p{color:#2c3331}
+.lede{font-size:17px;color:var(--mut);margin:0 0 30px;max-width:70ch}
+table{width:100%;border-collapse:collapse;margin:16px 0 22px;font-size:14.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+code{background:var(--code);padding:2px 5px;border-radius:3px;font-size:13.5px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--code);padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:13.5px;line-height:1.5}
+pre code{background:none;padding:0}
+.note{border-left:3px solid var(--acc);padding:2px 0 2px 14px;margin:20px 0;color:#3a4442}
+.card{display:block;border:1px solid var(--line);border-radius:8px;padding:16px 18px;
+ margin:12px 0;text-decoration:none;color:inherit}
+.card:hover{border-color:var(--acc)}
+.card b{display:block;margin-bottom:4px;font-size:15.5px}
+.card span{color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:24px 0 60px;color:var(--mut);font-size:13.5px}
+footer a{color:var(--acc)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;
+ background:#eef3f1;color:#3f5c56;margin-left:6px;vertical-align:1px}
+</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Proxy config field reference: Clash YAML vs sing-box JSON", "description": "Side-by-side field mapping for Clash Verge Rev, mihomo and sing-box: ports, DNS, fake-ip, TUN, auto-route, rule providers, TLS SNI. With the semantic differences that break migrations.", "url": "https://overnice2025.github.io/", "author": {"@type": "Organization", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "publisher": {"@type": "Organization", "name": "Proxy Config Reference"}, "isPartOf": {"@type": "WebSite", "name": "Proxy Config Reference", "url": "https://overnice2025.github.io"}, "about": ["Clash", "mihomo", "sing-box", "proxy configuration"]}</script>
+</head>
+<body>
+<header><div class="wrap">
+<a class="brand" href="/">Proxy Config Reference</a>
+<nav><a href="/">Config fields</a><a href="/errors.html">Error codes</a><a href="/converter.html">Link to config</a><a href="/free-nodes.html">Node testing</a><a href="https://jiedianshouce.com">Full write-ups →</a></nav>
+</div></header>
+<main class="wrap">
+<h1>What a free node measurement can and cannot tell you</h1>
+<p class="lede">A node that answers is not the same as a node that works, and a node that works today
+is not the same as a node that will work tomorrow. Those are three separate claims, and most lists
+publish only the first.</p>
+
+<h2>A node is three separate questions</h2>
+<table>
+<tr><th>Question</th><th>What answering it proves</th><th>What it leaves open</th></tr>
+<tr><td>Does the address resolve and the port accept a connection?</td><td>The endpoint exists and something is listening</td><td>Whether the protocol handshake completes</td></tr>
+<tr><td>Does the handshake complete and the tunnel come up?</td><td>Credentials and cipher match the server</td><td>Whether traffic can leave through the exit</td></tr>
+<tr><td>Does a request sent through the tunnel come back with a different egress address?</td><td>The whole path works end to end</td><td>Whether it will still work in an hour</td></tr>
+</table>
+<p>Most published checks stop at the second row, because a successful handshake is easy to detect.
+It is also the row that produces the most false positives: an exit can be blocked while the tunnel
+is perfectly healthy, and the client reports success the whole time.</p>
+
+<h2>One vantage point is not a measurement</h2>
+<p>A single test tells you what one host, on one network, at one moment experienced. Free endpoints
+are frequently reachable from one region and filtered from another, so a pass from a single probe
+is close to meaningless as a statement about the node. Testing from two independent exit points and
+requiring both to complete the request removes the largest class of false positives &mdash; at the
+cost of rejecting some nodes that would have worked for you specifically.</p>
+
+<h2>Median latency, not best sample</h2>
+<p>Ten requests produce ten numbers, and the fastest one is the least informative of them. A node
+with one fast sample and eight slow ones has a median that reflects the eight. Publishing the median
+is deliberately unflattering: it is the number that predicts what the connection will feel like,
+while the minimum predicts only what the network was briefly capable of.</p>
+
+<h2>What a pass still does not promise</h2>
+<p>Three things stay unknown after any measurement. Whether the operator logs traffic &mdash; nothing
+measurable from outside answers that. Whether the node will answer next week &mdash; endpoints
+disappear without notice, and that is normal rather than a fault. And whether the exit is safe to
+authenticate through: you do not know who operates it, so credentials and payment details do not
+belong on a public endpoint regardless of how fast it measured.</p>
+
+<h2>How the published list is produced</h2>
+<p>The daily list applies exactly this method: ten HTTPS requests from each of two exit points, a
+fixed-size download to measure throughput on both sides, and only nodes that passed on both sides
+are published &mdash; with the numbers, including the ones that look bad. The English list is at
+<a href="https://jiedianshouce.com/en/free-nodes/">free v2ray nodes, verified daily</a>; the Chinese
+version, with per-request evidence for each node, is at
+<a href="https://jiedianshouce.com/free-nodes/">每日免费节点核验</a>.</p>
+<p>Once a node is imported, the remaining failure is usually local: the tunnel comes up and the
+system still sends traffic around it. Confirming the actual egress address is the only way to tell
+<a href="https://jiedianshouce.com/en/articles/system-proxy-vs-tun/">system proxy from TUN capture</a>
+apart, and it is the first thing to check before blaming the node.</p>
+
+<h2>Related reference</h2>
+<p>Field-level differences between client configs are in
+<a href="https://github.com/overnice2025/proxy-client-matrix">proxy-client-matrix</a>; the exact
+error strings each client prints when a node fails are in
+<a href="https://github.com/overnice2025/clash-error-codes">clash-error-codes</a>.</p>
+</main>
+<footer><div class="wrap">
+<p>Maintained with <a href="https://github.com/overnice2025/clash-config-examples">clash-config-examples</a> and
+<a href="https://github.com/overnice2025/clash-error-codes">clash-error-codes</a>.
+Long-form write-ups with test evidence: <a href="https://jiedianshouce.com">jiedianshouce.com</a>.</p>
+<p>No benchmarks in this reference. Fields are described by what breaks when they are wrong,
+not by measured speed — different regions, ISPs and devices make speed claims unverifiable here.</p>
+</div></footer>
+</body>
+</html>
